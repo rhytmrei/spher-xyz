@@ -25,7 +25,7 @@ class LoginController extends Controller
             name: 'auth_token',
             value: $token,
             minutes: $ttl,
-            domain: env('FRONTEND_DOMAIN'),
+            domain: parse_url(env('FRONTEND_DOMAIN'), PHP_URL_HOST),
             sameSite: 'Lax'
         );
 

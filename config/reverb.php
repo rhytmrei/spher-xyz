@@ -83,7 +83,7 @@ return [
                     'useTLS' => env('REVERB_SCHEME', 'http') === 'https',
                 ],
                 'allowed_origins' => [
-                    env('FRONTEND_DOMAIN'),
+                    '*',
                 ],
                 'ping_interval' => env('REVERB_APP_PING_INTERVAL', 3600),
                 'activity_timeout' => env('REVERB_APP_ACTIVITY_TIMEOUT', 30),

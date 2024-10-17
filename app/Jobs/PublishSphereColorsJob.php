@@ -5,7 +5,6 @@ namespace App\Jobs;
 use App\Models\Sphere;
 use Exception;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
@@ -21,20 +20,13 @@ use ImagickPixel;
  * Processes the colors of a sphere's active texture and saves the color
  * percentages to the sphere model.
  */
-class PublishSphereColorsJob implements ShouldBeUnique, ShouldQueue
+class PublishSphereColorsJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public function __construct(protected Sphere $sphere)
     {
         //
-    }
-
-    public int $uniqueFor = 30;
-
-    public function uniqueId(): string
-    {
-        return $this->sphere->id.'colors';
     }
 
     /**

@@ -31,7 +31,7 @@ class PublishSphereJob implements ShouldBeUnique, ShouldQueue
         //
     }
 
-    public int $uniqueFor = 30;
+    public int $uniqueFor = 60;
 
     public function uniqueId(): string
     {
@@ -50,6 +50,8 @@ class PublishSphereJob implements ShouldBeUnique, ShouldQueue
     public function handle(BackgroundServiceContract $background): void
     {
         $activeTexture = Storage::path($this->sphere->activeTexture->path);
+
+        \Log::info('Publishing sphere: '.$this->sphere->id);
 
         $currentBackground = $background->getCurrent($this->sphere->id);
 
@@ -82,6 +84,9 @@ class PublishSphereJob implements ShouldBeUnique, ShouldQueue
                 ['type' => 'image'],
                 ['path' => $path]
             );
+
+        PublishSphereColorsJob::dispatch($this->sphere);
+        PublishSphereGif::dispatch($this->sphere);
 
         // Clean up resources by clearing and destroying Imagick instances.
         $overlayImage->clear();

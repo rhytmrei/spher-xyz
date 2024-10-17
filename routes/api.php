@@ -21,9 +21,7 @@ Route::controller(HomeController::class)->group(function () {
 
 Route::prefix('dashboard')->controller(DashboardController::class)->middleware(['auth:api', 'auth.required'])->group(function () {
     Route::get('spheres', 'index');
-
     Route::post('create', 'create')->middleware('throttle:5,1');
-
     Route::post('edit', 'edit');
 });
 
@@ -38,13 +36,20 @@ Route::post('react/{sphere}/{type}', [RatingController::class, 'reaction'])
 
 Route::namespace('App\Http\Controllers\Auth')->prefix('auth')->group(function () {
 
-    Route::middleware('throttle:1')->group(function () {
+    Route::middleware('throttle:10,1')->group(function () {
         Route::post('login', 'LoginController')->name('login');
         Route::post('register', 'RegisterController')->name('register');
     });
 
     Route::middleware(['auth:api', 'auth.required'])->group(function () {
         Route::get('details', 'DetailsController')->name('details');
+
+        Route::prefix('email')->group(function () {
+            Route::post('verification-notification', 'EmailController@sendVerificationEmail');
+            Route::get('verify/{id}/{hash}', 'EmailController@verify')
+                ->middleware(['signed', 'throttle:6,1'])
+                ->name('verification.verify');
+        });
 
         Route::post('logout', 'LogoutController')
             ->name('logout');

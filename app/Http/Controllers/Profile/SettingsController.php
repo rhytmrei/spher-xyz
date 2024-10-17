@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Profile;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Settings\UploadAvatarRequest;
+use App\Models\Image;
+use App\Models\Sphere;
 use App\Services\Contracts\FileServiceContract;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Storage;
@@ -45,7 +47,12 @@ class SettingsController extends Controller
             if ($old->path === $path) {
                 return response()->json(['url' => Storage::url($path)]);
             }
-            $old->deleteQuietly();
+
+            if (Image::where('path', $old->path)->where('type', 'gif')->exists()) {
+                $old->deleteQuietly();
+            } else {
+                $old->delete();
+            }
         }
 
         $user->image()->create(['path' => $path, 'type' => $type]);

@@ -45,10 +45,6 @@ class SphereController
 
     public function publish(Sphere $sphere, array $data = []): void
     {
-        PublishSphereJob::dispatch($sphere);
-
-        PublishSphereColorsJob::dispatch($sphere)->delay(now()->addSeconds(2));
-
-        PublishSphereGif::dispatch($sphere)->delay(now()->addSeconds(4));
+        PublishSphereJob::dispatch($sphere)->delay(now()->addMinute());
     }
 }

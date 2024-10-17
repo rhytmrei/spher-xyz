@@ -5,7 +5,6 @@ namespace App\Jobs;
 use App\Models\Sphere;
 use Exception;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
@@ -23,20 +22,13 @@ use ImagickPixel;
  * applying a generated before mask and saving the result to storage.
  * GIFs can be used for user profile pictures or for other purposes.
  */
-class PublishSphereGif implements ShouldBeUnique, ShouldQueue
+class PublishSphereGif implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public function __construct(protected Sphere $sphere)
     {
         //
-    }
-
-    public int $uniqueFor = 30;
-
-    public function uniqueId(): string
-    {
-        return $this->sphere->id.'publish';
     }
 
     /**
@@ -106,9 +98,18 @@ class PublishSphereGif implements ShouldBeUnique, ShouldQueue
 
             $frames->setImageFormat('gif');
 
-            $savePath = Storage::path("spheres/{$this->sphere->id}/texture.gif");
+            $path = "spheres/{$this->sphere->id}/texture.gif";
+
+            $savePath = Storage::path($path);
 
             $frames->writeImages($savePath, true);
+
+            $this->sphere->images()
+                ->where('type', 'gif')
+                ->updateOrCreate([
+                    'path' => $path,
+                    'type' => 'gif',
+                ]);
 
             $seamlessTexture->clear();
             $seamlessTexture->destroy();

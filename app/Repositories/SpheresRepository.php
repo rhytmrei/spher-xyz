@@ -10,9 +10,20 @@ use Illuminate\Support\Facades\DB;
 
 class SpheresRepository implements SpheresRepositoryContract
 {
+    /**
+     * Retrieve spheres related to a given sphere based on its texture colors.
+     *
+     * This method finds the most prominent color from the sphere's texture colors and returns spheres
+     * that are similar in color using the `relatedByColor` method.
+     *
+     * @param Sphere $sphere The sphere instance for which to find related spheres.
+     * @param int|null $limit Optional. Limit the number of results. Default is null (no limit).
+     *
+     * @return Builder|null A query builder instance for related spheres, or null if the sphere has no texture colors.
+     */
     public function relatedBySphere(Sphere $sphere, ?int $limit = null): ?Builder
     {
-        if (! $sphere->texture_colors) {
+        if (!$sphere->texture_colors) {
             return null;
         }
 
@@ -25,8 +36,30 @@ class SpheresRepository implements SpheresRepositoryContract
         return $this->relatedByColor($rgb, $limit);
     }
 
+    /**
+     * Retrieve spheres related by a given RGB color value.
+     *
+     * This method finds spheres with similar color profiles by calculating the Euclidean distance between
+     * the given RGB color and the color data of other spheres. A distance threshold is used to determine
+     * similarity.
+     *
+     * @param array $rgb The RGB color array [R, G, B] to search for similar colors.
+     * @param int|null $limit Optional. Limit the number of results. Default is null (no limit).
+     *
+     * @return Builder A query builder instance for related spheres based on color similarity.
+     */
     public function relatedByColor(array $rgb, ?int $limit = null): Builder
     {
+        $distanceThreshold = 130;
+
+        $distanceQuery = '
+            sqrt(
+                power((mpc.color->>0)::int - ?, 2) +
+                power((mpc.color->>1)::int - ?, 2) +
+                power((mpc.color->>2)::int - ?, 2)
+            )::float
+        ';
+
         // Prepare a subquery to get colors and their percentages from all spheres
         $subquery = Sphere::select(
             'id AS original_id',
@@ -47,23 +80,32 @@ class SpheresRepository implements SpheresRepositoryContract
                     ->groupBy('spheres.id');
             })
             // Calculate the Euclidean distance between the colors
-            ->selectRaw('
-                sqrt(
-                    power((mpc.color->>0)::int - ?, 2) +
-                    power((mpc.color->>1)::int - ?, 2) +
-                    power((mpc.color->>2)::int - ?, 2)
-                )::float AS distance
-            ', $rgb)
+            ->selectRaw("{$distanceQuery} AS distance", $rgb)
+            ->whereRaw("{$distanceQuery} < ?", [...$rgb, $distanceThreshold])
             ->limit($limit);
 
         return $results;
     }
 
+    /**
+     * Fetch a set of spheres based on the given query.
+     *
+     * This method prepares a base query for fetching spheres, including optional reaction data and
+     * relations like primary image and reaction counts. It also includes the authenticated user's
+     * reaction data, if available.
+     *
+     * @param Builder $query The base query builder for retrieving spheres.
+     * @param array|string $rows Optional. The columns to select from the spheres table.
+     * @param bool $activeOnly Optional. Whether to restrict the query to active spheres only. Default is true.
+     *
+     * @return Builder The prepared query builder for fetching spheres.
+     */
     public function fetchSpheres(
-        Builder $query,
+        Builder      $query,
         array|string $rows = ['id', 'is_active', 'title', 'user_id', 'created_at'],
-        bool $activeOnly = true
-    ): Builder {
+        bool         $activeOnly = true
+    ): Builder
+    {
         $result = $query->with(['primaryImage', 'reactions'])
             ->select($rows)
             ->withReactionCounts();

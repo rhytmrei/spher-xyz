@@ -15,6 +15,13 @@ class ExploreController extends Controller
         //
     }
 
+    /**
+     * Display a listing of spheres based on the search query.
+     *
+     * @param Request $request The HTTP request instance.
+     * @param ColorServiceContract $colorService The color service instance for color-related operations.
+     * @return JsonResponse The JSON response containing the list of spheres.
+     */
     public function index(Request $request, ColorServiceContract $colorService): JsonResponse
     {
         $search = $request->get('query');
@@ -28,12 +35,13 @@ class ExploreController extends Controller
 
             if ($colorService->isValidHexColor($search)) {
                 $color = $colorService->hexToRgb($search);
-
+                // Fetch spheres related by the color
                 $query = $this->spheresRepository->relatedByColor($color);
             } else {
                 $query = $this->spheresRepository->fetchSpheres(Sphere::where('title', 'ILIKE', "%{$search}%"));
             }
         } else {
+            // If no search query, fetch all spheres
             $query = $this->spheresRepository->fetchSpheres(Sphere::query());
         }
 
@@ -42,6 +50,12 @@ class ExploreController extends Controller
         return response()->json($spheres);
     }
 
+    /**
+     * Display the specified sphere by its ID.
+     *
+     * @param string $id The ID of the sphere to display.
+     * @return JsonResponse The JSON response containing the sphere and related spheres.
+     */
     public function show(string $id): JsonResponse
     {
         $sphere = $this->spheresRepository->fetchSpheres(Sphere::where('id', $id), '*')->first();

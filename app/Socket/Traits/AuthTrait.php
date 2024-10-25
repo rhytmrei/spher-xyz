@@ -71,7 +71,7 @@ trait AuthTrait
     protected function authenticateUserWithToken(string $token): ?User
     {
         try {
-            return JWTAuth::setToken($token)->authenticate();
+            return JWTAuth::setToken(trim($token))->authenticate();
         } catch (TokenInvalidException $e) {
             Log::info('Invalid Token: '.$e->getMessage());
         } catch (TokenExpiredException $e) {

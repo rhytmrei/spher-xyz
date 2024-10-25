@@ -15,6 +15,7 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->prependToGroup('auth:api', \App\Http\Middleware\CookieToken::class);
+        $middleware->appendToGroup('api', \App\Http\Middleware\CompressResponse::class);
         $middleware->alias([
             'auth.required' => \App\Http\Middleware\EnsureTokenGiven::class,
         ]);

@@ -16,7 +16,7 @@ Route::prefix('profile')->namespace('App\Http\Controllers\Profile')->middleware(
 });
 
 Route::controller(HomeController::class)->group(function () {
-    Route::get('home', 'index');
+    Route::get('home/{limit?}', 'index');
 });
 
 Route::prefix('dashboard')->controller(DashboardController::class)->middleware(['auth:api', 'auth.required'])->group(function () {

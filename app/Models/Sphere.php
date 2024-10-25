@@ -23,7 +23,7 @@ class Sphere extends Model
     protected static function booted(): void
     {
         static::creating(function ($sphere) {
-            $uuid = (string) Str::uuid();
+            $uuid = (string)Str::uuid();
 
             $sphere->id = $uuid;
 
@@ -105,9 +105,15 @@ class Sphere extends Model
 
     public function getImageSrcAttribute(): string
     {
-        $image = $this->primaryImage->path ?? self::defaultImage();
+        $imagePath = $this->primaryImage->path ?? self::defaultImage();
 
-        return Storage::url($image);
+        $url = Storage::url($imagePath);
+
+        if ($this->primaryImage && $this->primaryImage->updated_at) {
+            $url .= '?t=' . $this->primaryImage->updated_at->timestamp;
+        }
+
+        return $url;
     }
 
     private function morphImage(string $type): MorphOne
